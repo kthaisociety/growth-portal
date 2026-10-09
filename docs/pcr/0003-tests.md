@@ -1,21 +1,17 @@
-# 0003. Tests: next to the code, acceptance tests per ticket
+# 0003. Tests live next to the code and run on every PR
 
 Status: Accepted
 
 ## Convention
-- **Module tests** follow each language's convention and are permanent:
+- Tests follow each language's convention and run in CI on every PR and every merge to `main`:
   - Go: `foo_test.go` next to `foo.go`, run with `go test ./...`.
   - Frontend: `Foo.test.tsx` next to `Foo.tsx`, run with `npm test` (Vitest) in `ui/`.
-  - Never call real services: use `httptest.Server`, fakes, or a stubbed `fetch`.
-- **Acceptance tests** live in `test/acceptance/`, one file per ticket, with the build tag
-  `//go:build acceptance`. They're written first, describe the ticket's behaviour end to end, and exist
-  only on that ticket's branch: before merging, delete the file, moving anything worth keeping into module
-  tests.
+- Every PR adds or updates tests that show its ticket's behaviour works. Writing that test first is a good
+  way to pin down what "done" means.
+- Tests never call real services: use `httptest.Server`, fakes, or a stubbed `fetch`.
 
 ## Why
-Module tests guard the code permanently. Acceptance tests pin down "done" for one ticket without piling
-up slow end-to-end tests on `main`.
+One kind of test that always runs is easier to keep up than several kinds with their own rules.
 
 ## How to apply
 CI runs `go vet`, `go test -race ./...`, and `npm run lint`, `npm test` and `npm run build` in `ui/`.
-`go test -tags acceptance ./test/acceptance/...` runs acceptance tests.

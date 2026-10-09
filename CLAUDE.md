@@ -14,7 +14,6 @@ Luma data comes from luma-service (`../luma-service`), never from Luma directly.
 - Frontend dev: `cd ui && npm install && npm run dev` (Vite on 5173, proxies `/api` to 8000)
 - Go tests: `go vet ./... && go test -race ./...`
 - Frontend checks: `cd ui && npm run lint && npm test && npm run build`
-- Acceptance tests (ticket branches only): `go test -tags acceptance ./test/acceptance/...`
 - Image: `docker build -t growth-portal .`
 
 ## Layout
@@ -26,7 +25,6 @@ Luma data comes from luma-service (`../luma-service`), never from Luma directly.
 - `internal/lumaservice`: client for luma-service
 - `internal/database`: Postgres connection
 - `ui/`: the frontend (Vite, React, TypeScript, Tailwind); `ui/embed.go` embeds `ui/dist`
-- `test/acceptance`: per-ticket acceptance tests
 
 ## Rules
 

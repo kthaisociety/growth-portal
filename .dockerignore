@@ -3,6 +3,5 @@
 .env
 *.log
 docs
-test
 ui/node_modules
 ui/dist
