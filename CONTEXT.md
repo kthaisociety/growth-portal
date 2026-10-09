@@ -12,4 +12,6 @@ Words as this project uses them.
 - **Answer**: a member's answer to a question; a list of values (several for multi-select).
 - **Demographics**: the counts of answers per question across all members, e.g. 40 members graduating
   in 2027. The only thing the API returns about members.
+- **User**: the person signed in.
+- **Dev user**: the simulated user every request is signed in as until identity-service is live.
 - **Dashboard**: a page of the frontend showing demographics.

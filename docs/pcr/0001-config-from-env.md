@@ -1,4 +1,4 @@
-# 0002. All configuration comes from the environment, at runtime
+# 0001. All configuration comes from the environment, at runtime
 
 Status: Accepted
 

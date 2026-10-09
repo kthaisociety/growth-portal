@@ -12,11 +12,11 @@ import (
 
 	"github.com/joho/godotenv"
 
+	"github.com/kthaisociety/growth-portal/frontend"
 	"github.com/kthaisociety/growth-portal/internal/config"
 	"github.com/kthaisociety/growth-portal/internal/database"
 	"github.com/kthaisociety/growth-portal/internal/handlers"
 	"github.com/kthaisociety/growth-portal/internal/lumaservice"
-	"github.com/kthaisociety/growth-portal/ui"
 )
 
 func main() {
@@ -27,6 +27,11 @@ func main() {
 	if err := cfg.Validate(); err != nil {
 		log.Fatal(err)
 	}
+	if u := cfg.DevUser(); u != nil {
+		log.Printf("WARNING: every request is signed in as dev user %s (docs/pcr/0006)", u.Email)
+	} else {
+		log.Printf("no DEV_USER_EMAIL: the API refuses every request but health until identity-service sign-in exists")
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -36,11 +41,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	if err := database.Migrate(ctx, db); err != nil {
+		log.Fatal(err)
+	}
 
 	router := handlers.NewRouter(handlers.Deps{
-		Members: lumaservice.New(cfg.LumaServiceURL, cfg.LumaServiceSecret),
-		PingDB:  func(ctx context.Context) error { return database.Ping(ctx, db) },
-		UI:      ui.Dist(),
+		Members:  lumaservice.New(cfg.LumaServiceURL, cfg.LumaServiceSecret),
+		PingDB:   func(ctx context.Context) error { return database.Ping(ctx, db) },
+		Frontend: frontend.Dist(),
+		DevUser:  cfg.DevUser(),
 	})
 
 	srv := &http.Server{

@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/kthaisociety/growth-portal/internal/auth"
 	"github.com/kthaisociety/growth-portal/internal/lumaservice"
 )
 
@@ -32,9 +33,11 @@ var builtUI = fstest.MapFS{
 	".gitkeep":        {Data: nil},
 }
 
-func newTestRouter(m Members, ui fstest.MapFS) *gin.Engine {
+var devUser = &auth.User{Subject: "dev", Email: "dev@kthais.com", Name: "Dev User"}
+
+func newTestRouter(m Members, dist fstest.MapFS) *gin.Engine {
 	gin.SetMode(gin.TestMode)
-	return NewRouter(Deps{Members: m, PingDB: func(context.Context) error { return nil }, UI: ui})
+	return NewRouter(Deps{Members: m, PingDB: func(context.Context) error { return nil }, Frontend: dist, DevUser: devUser})
 }
 
 func get(r http.Handler, path string) *httptest.ResponseRecorder {
@@ -62,6 +65,25 @@ func TestDemographicsUpstreamFailureIsABadGateway(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadGateway, w.Code)
 	assert.NotContains(t, w.Body.String(), "secret detail")
+}
+
+func TestMeIsTheSignedInUser(t *testing.T) {
+	w := get(newTestRouter(fakeMembers{}, builtUI), "/api/me")
+
+	require.Equal(t, http.StatusOK, w.Code)
+	var body auth.User
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
+	assert.Equal(t, *devUser, body)
+}
+
+func TestWithoutADevUserOnlyHealthAnswers(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	r := NewRouter(Deps{Members: fakeMembers{}, PingDB: func(context.Context) error { return nil }, Frontend: builtUI})
+
+	assert.Equal(t, http.StatusOK, get(r, "/api/health").Code)
+	assert.Equal(t, http.StatusUnauthorized, get(r, "/api/me").Code)
+	assert.Equal(t, http.StatusUnauthorized, get(r, "/api/community/demographics").Code)
+	assert.Equal(t, http.StatusOK, get(r, "/").Code)
 }
 
 func TestFrontendRouting(t *testing.T) {

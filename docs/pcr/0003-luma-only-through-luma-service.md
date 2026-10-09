@@ -1,4 +1,4 @@
-# 0004. Luma data comes only from luma-service
+# 0003. Luma data comes only from luma-service
 
 Status: Accepted
 

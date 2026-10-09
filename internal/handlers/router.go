@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/kthaisociety/growth-portal/internal/auth"
 	"github.com/kthaisociety/growth-portal/internal/demographics"
 	"github.com/kthaisociety/growth-portal/internal/lumaservice"
 )
@@ -23,8 +24,11 @@ type Members interface {
 type Deps struct {
 	Members Members
 	PingDB  func(ctx context.Context) error
-	// UI is the built frontend (ui.Dist()).
-	UI fs.FS
+	// Frontend is the built frontend (frontend.Dist()).
+	Frontend fs.FS
+	// DevUser is who every request is signed in as until identity-service is live (docs/pcr/0006). Nil
+	// refuses every request but health.
+	DevUser *auth.User
 }
 
 func NewRouter(d Deps) *gin.Engine {
@@ -33,9 +37,12 @@ func NewRouter(d Deps) *gin.Engine {
 
 	api := r.Group("/api")
 	api.GET("/health", health(d.PingDB))
-	api.GET("/community/demographics", communityDemographics(d.Members))
 
-	r.NoRoute(frontend(d.UI))
+	signedIn := api.Group("", auth.Middleware(d.DevUser))
+	signedIn.GET("/me", me)
+	signedIn.GET("/community/demographics", communityDemographics(d.Members))
+
+	r.NoRoute(frontend(d.Frontend))
 	return r
 }
 
@@ -49,7 +56,11 @@ func health(pingDB func(ctx context.Context) error) gin.HandlerFunc {
 	}
 }
 
-// communityDemographics returns aggregate counts only, never individual members (docs/pcr/0005).
+func me(c *gin.Context) {
+	c.JSON(http.StatusOK, auth.Current(c))
+}
+
+// communityDemographics returns aggregate counts only, never individual members (docs/pcr/0006).
 func communityDemographics(m Members) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		members, err := m.CommunityMembers(c.Request.Context())
@@ -64,8 +75,8 @@ func communityDemographics(m Members) gin.HandlerFunc {
 
 // frontend serves the single-page app: a file if one exists at the path, otherwise index.html so
 // client-side routes work on reload. Unknown /api paths stay JSON 404s.
-func frontend(ui fs.FS) gin.HandlerFunc {
-	files := http.FileServerFS(ui)
+func frontend(dist fs.FS) gin.HandlerFunc {
+	files := http.FileServerFS(dist)
 	return func(c *gin.Context) {
 		p := c.Request.URL.Path
 		if p == "/api" || strings.HasPrefix(p, "/api/") {
@@ -79,7 +90,7 @@ func frontend(ui fs.FS) gin.HandlerFunc {
 
 		name := strings.TrimPrefix(path.Clean(p), "/")
 		if name != "" && name != "index.html" {
-			if info, err := fs.Stat(ui, name); err == nil && !info.IsDir() {
+			if info, err := fs.Stat(dist, name); err == nil && !info.IsDir() {
 				if strings.HasPrefix(name, "assets/") {
 					// Vite puts a content hash in every asset's name.
 					c.Header("Cache-Control", "public, max-age=31536000, immutable")
@@ -89,9 +100,9 @@ func frontend(ui fs.FS) gin.HandlerFunc {
 			}
 		}
 
-		index, err := fs.ReadFile(ui, "index.html")
+		index, err := fs.ReadFile(dist, "index.html")
 		if err != nil {
-			c.String(http.StatusServiceUnavailable, "frontend not built: run `npm run build` in ui/")
+			c.String(http.StatusServiceUnavailable, "frontend not built: run `npm run build` in frontend/")
 			return
 		}
 		c.Header("Cache-Control", "no-cache")

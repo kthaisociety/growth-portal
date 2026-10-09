@@ -1,7 +1,8 @@
 # growth-portal
 
 Dashboards for the KTHAIS growth team: who is in the Luma "Community" tier, broken down by their
-registration answers (graduation year, areas of interest, …). A proof of concept, with no sign-in yet.
+registration answers (graduation year, areas of interest, …). A proof of concept: until identity-service
+is live, a dev user stands in for sign-in ([PCR 0006](docs/pcr/0006-simulated-sign-in-until-identity-service.md)).
 
 One repo, one image: a Go server serves the JSON API under `/api` and the frontend (Vite + React, embedded
 in the binary) on every other path. Member data comes from [luma-service](../luma-service).
@@ -18,35 +19,43 @@ cp .env.example .env                      # LUMA_SERVICE_SECRET = luma-service's
 # 3. the backend
 go run ./cmd/server                       # 127.0.0.1:8000
 # 4. the frontend, with hot reload
-cd ui && npm install && npm run dev      # http://127.0.0.1:5173, /api proxied to 8000
+cd frontend && npm install && npm run dev      # http://127.0.0.1:5173, /api proxied to 8000
 ```
 
-Or build the frontend once (`cd ui && npm run build`) and open http://127.0.0.1:8000: the Go server
+Or build the frontend once (`cd frontend && npm run build`) and open http://127.0.0.1:8000: the Go server
 serves it, as in production.
 
 ## Tests
 
 ```sh
-go vet ./... && go test -race ./...
-cd ui && npm run lint && npm test && npm run build
+make test             # both halves; run `npm install` in frontend/ first
+make test-backend     # go vet, go test -race ./...; database tests need `docker compose up -d`
+make test-frontend    # lint, Vitest, build, in frontend/
 ```
+
+## Database
+
+The schema is SQL files in `internal/database/migrations/`, applied by the server at startup
+([PCR 0007](docs/pcr/0007-sql-migrations.md)).
 
 ## API
 
 | Route | Returns |
 |---|---|
 | `GET /api/health` | `{"service":"growth-portal","status":"healthy"}`, or 503 if the database is unreachable |
+| `GET /api/me` | the signed-in user: `{"sub":"…","email":"…","name":"…"}`; 401 if no one is |
 | `GET /api/community/demographics` | `{"member_count":N,"questions":[{"label":"…","answered":n,"values":[{"value":"2027","count":12}]}]}` |
 
 ## Configuration
 
-All from env, read by the Go server ([PCR 0002](docs/pcr/0002-config-from-env.md)); see `.env.example`.
+All from env, read by the Go server ([PCR 0001](docs/pcr/0001-config-from-env.md)); see `.env.example`.
 
 | Variable | Secret | |
 |---|---|---|
 | `DATABASE_URL` | yes | Postgres connection string |
 | `LUMA_SERVICE_URL` | no | luma-service's base URL |
 | `LUMA_SERVICE_SECRET` | yes | luma-service's shared secret |
+| `DEV_USER_EMAIL` | no | signs every request in as this user until identity-service is live; never in production |
 | `HOST`, `PORT` | no | default all interfaces, `8000` |
 
 ## Delivery

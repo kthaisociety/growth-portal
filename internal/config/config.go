@@ -6,6 +6,8 @@ import (
 	"os"
 	"slices"
 	"strings"
+
+	"github.com/kthaisociety/growth-portal/internal/auth"
 )
 
 type Config struct {
@@ -23,6 +25,10 @@ type Config struct {
 	LumaServiceURL string
 	// LumaServiceSecret is sent as X-Service-Secret; luma-service's LUMA_SERVICE_SECRET.
 	LumaServiceSecret string
+
+	// DevUserEmail, when set, signs every request in as this user (docs/pcr/0006). Unset, the API refuses
+	// every request but health. Never set in production.
+	DevUserEmail string
 }
 
 func Load() *Config {
@@ -32,7 +38,16 @@ func Load() *Config {
 		DatabaseURL:       getEnv("DATABASE_URL", ""),
 		LumaServiceURL:    strings.TrimSuffix(getEnv("LUMA_SERVICE_URL", ""), "/"),
 		LumaServiceSecret: getEnv("LUMA_SERVICE_SECRET", ""),
+		DevUserEmail:      strings.TrimSpace(getEnv("DEV_USER_EMAIL", "")),
 	}
+}
+
+// DevUser is the user every request is signed in as, or nil when DEV_USER_EMAIL is unset.
+func (c *Config) DevUser() *auth.User {
+	if c.DevUserEmail == "" {
+		return nil
+	}
+	return &auth.User{Subject: "dev", Email: c.DevUserEmail, Name: "Dev User"}
 }
 
 // Validate fails if a required setting is missing, naming every missing variable at once.
