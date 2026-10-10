@@ -1,5 +1,5 @@
 // Package lumaservice is growth-portal's client for luma-service, the only way this app gets Luma data
-// (docs/pcr/0004).
+// (docs/pcr/0003).
 package lumaservice
 
 import (
@@ -27,7 +27,7 @@ func New(baseURL, secret string) *Client {
 }
 
 // Member is a Community tier member as this app needs it. Names and emails are deliberately not
-// decoded: the app only works with aggregates (docs/pcr/0005).
+// decoded: the app only works with aggregates (docs/pcr/0006).
 type Member struct {
 	CreatedAt time.Time `json:"created_at"`
 	Answers   []Answer  `json:"answers"`

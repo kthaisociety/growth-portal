@@ -7,8 +7,8 @@ The KTHAIS stack is Next.js and Go. Here the Go server owns the API (ADR 0001), 
 no Next route handlers and no middleware. A static Next export would drop exactly what Next adds.
 
 ## Decision
-`ui/` is a Vite + React + TypeScript single-page app with Tailwind CSS, linted with oxlint and tested with
-Vitest and Testing Library.
+`frontend/` is a Vite + React + TypeScript single-page app with Tailwind CSS, linted with oxlint and
+tested with Vitest and Testing Library.
 
 ## Consequences
 React, TypeScript and Tailwind carry over from landingpage-frontend. Routing, when the app needs more than

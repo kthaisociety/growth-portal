@@ -10,7 +10,7 @@ import (
 )
 
 // countedTypes are the question types summarised. Only choice questions: free-text answers could
-// identify people, and the API has no sign-in yet (docs/pcr/0005).
+// identify people, and sign-in is still simulated (docs/pcr/0006).
 var countedTypes = map[string]bool{"select": true}
 
 type Summary struct {

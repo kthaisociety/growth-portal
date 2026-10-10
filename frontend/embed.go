@@ -1,7 +1,7 @@
-// Package ui embeds the built frontend (ui/dist) into the Go binary (docs/adr/0001). Run `npm run
-// build` in ui/ first; until then only dist/.gitkeep is embedded and the server answers "frontend not
+// Package frontend embeds the built frontend (frontend/dist) into the Go binary (docs/adr/0001). Run `npm run
+// build` in frontend/ first; until then only dist/.gitkeep is embedded and the server answers "frontend not
 // built".
-package ui
+package frontend
 
 import (
 	"embed"

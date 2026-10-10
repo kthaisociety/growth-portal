@@ -7,7 +7,7 @@ The delivery pipeline (`kthaisociety/workflows`, `deployments`) builds, releases
 repo. The app should answer on one domain: the frontend at `/`, the API at `/api`.
 
 ## Decision
-The frontend is built to static files (`ui/dist`) and embedded into the Go binary (`ui/embed.go`). Gin
+The frontend is built to static files (`frontend/dist`) and embedded into the Go binary (`frontend/embed.go`). Gin
 serves `/api/*`; every other path serves a file from the build or, failing that, `index.html` for
 client-side routes. The Dockerfile builds the frontend, then the Go binary, into one image.
 
@@ -15,5 +15,5 @@ client-side routes. The Dockerfile builds the frontend, then the Go binary, into
 - One image, one port, one version, and the shared workflows work unchanged.
 - Same origin: no CORS, and the frontend needs no API URL, so nothing is baked in at build time.
 - No server-side rendering. Not needed (ADR 0002).
-- `go build` needs `ui/dist` to exist: `ui/dist/.gitkeep` is committed, and the server answers
+- `go build` needs `frontend/dist` to exist: `frontend/dist/.gitkeep` is committed, and the server answers
   "frontend not built" until `npm run build` has run.
